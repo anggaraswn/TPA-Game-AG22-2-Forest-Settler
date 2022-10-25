@@ -196,7 +196,7 @@ public class Player : MonoBehaviour
 
         }else if (Input.GetMouseButton(0))
         {
-            //if () ;
+            animator.SetBool("IsAttacking", true);
         }
         else
         {
@@ -272,6 +272,10 @@ public class Player : MonoBehaviour
         currHealth = maxHealth;
         healthBar.SetHealth(currHealth);
 
+        addSkillPoints.Show();
+        
+        AudioSource audio = GameObject.Find("LevelUp").GetComponent<AudioSource>();
+        audio.Play();
     }
 
     public void AddMaxExp()
