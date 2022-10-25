@@ -11,7 +11,10 @@ public class EnemyController : MonoBehaviour
     public Animator animator;
     private CharacterStats stats;
     private bool isAttacking = false;
-
+    public int damage = 10;
+    public int currHealth;
+    public int maxHealth = 100;
+    public int attackDelay;
 
     // Start is called before the first frame update
     void Start()
@@ -19,6 +22,7 @@ public class EnemyController : MonoBehaviour
         target = PlayerManager.instance.player.transform;
         agent = GetComponent<NavMeshAgent>();
         stats = FindObjectOfType<CharacterStats>();
+        currHealth = maxHealth;
     }
 
     // Update is called once per frame
@@ -46,6 +50,11 @@ public class EnemyController : MonoBehaviour
         else
         {
             animator.SetBool("IsAttack", false);
+        }
+
+        if(currHealth <= 0)
+        {
+            //Up
         }
     }
 

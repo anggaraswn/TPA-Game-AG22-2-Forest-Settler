@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
 
 public class Player : MonoBehaviour
 {
@@ -10,6 +12,8 @@ public class Player : MonoBehaviour
     private CapsuleCollider capsuleCollider;
     public Interactable focus;
     public HealthBar healthBar;
+    public ExpBar expBar;
+    public AddSkillPoints addSkillPoints;
 
     [SerializeField] float speed = 6f;
     [SerializeField] float maxRotateSpeed = 0.1f;
@@ -19,9 +23,22 @@ public class Player : MonoBehaviour
     private float currentVelocity;
     private float gravity = 9.8f;
     public int maxHealth = 100;
-    public int currentHealth;
+    public int currHealth;
+    private int maxExp = 250;
+    private int currExp;
+    private int currLevel = 1;
     private bool canAttack = false;
+    public bool haveWeapon = false;
+    public int damage = 30;
+    public int attackDuration = 10;
+    public int currAttackDuration = 0;
+    public int AGI = 1;
+    public int STR = 1;
+    public int POW = 1;
+    public int statusPoints = 0;
+    List<GameObject> enemyList = new List<GameObject>();
 
+    bool holdingWeapon = false;
 
     // Start is called before the first frame update
     void Start()
@@ -29,20 +46,59 @@ public class Player : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         capsuleCollider = GetComponent<CapsuleCollider>();
-        currentHealth = maxHealth;
+        currHealth = maxHealth;
         healthBar.SetMaxHealth(maxHealth);
+        currExp = maxExp;
+        expBar.SetMaxExp(maxExp);
+        expBar.SetCurrLevel(currLevel);
+        addSkillPoints = GameObject.Find("AddSkillPoints").GetComponent<AddSkillPoints>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        Movement();
-        Animation();
-
-        if (Input.GetMouseButtonDown(0))
+        if(currHealth <= 0)
         {
-            TakeDamage(20);
+            SceneManager.LoadScene("DeathMenu");
         }
+        else
+        {
+            Movement();
+            Animation();
+
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                if(currAttackDuration <= 0)
+                {
+                    if(enemyList.Count > 0)
+                    {
+                        foreach(GameObject gameObject in enemyList)
+                        {
+                            gameObject.GetComponentInChildren<Enemy>().TakeDamage(damage);
+                        }
+                    }
+                }
+                currAttackDuration = attackDuration;
+            }
+            if(currAttackDuration > 0)
+            {
+                currAttackDuration--;
+            }
+        }
+
+        if(statusPoints > 0)
+        {
+            addSkillPoints.Show();
+        }
+        else
+        {
+            addSkillPoints.Hide();
+        }
+    }
+
+    private void Die()
+    {
+
     }
 
     private void Movement()
@@ -138,6 +194,9 @@ public class Player : MonoBehaviour
             animator.SetFloat("DirectionX", direction.x);
             animator.SetFloat("DirectionY", 0f);
 
+        }else if (Input.GetMouseButton(0))
+        {
+            //if () ;
         }
         else
         {
@@ -150,11 +209,6 @@ public class Player : MonoBehaviour
             animator.SetFloat("DirectionY", 0f);
 
         }
-    }
-
-    private void Combat()
-    {
-        
     }
 
     private void SetFocus(Interactable newFocus)
@@ -176,26 +230,63 @@ public class Player : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Interactable interactable = other.GetComponent<Interactable>();
-        if (interactable != null) SetFocus(interactable);
-
-        if(other.gameObject.tag == "Enemy")
+        if(other.gameObject.GetComponent<Enemy>() != null && !enemyList.Contains(other.gameObject))
         {
-            canAttack = true;
-            Debug.Log("Can Attack " + other.name);
+            enemyList.Add(other.gameObject);
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        Interactable interactable = other.GetComponent<Interactable>();
-        if (interactable != null) RemoveFocus();
+        if(other.gameObject.GetComponent<Enemy>() != null)
+        {
+            enemyList.Remove(other.gameObject);
+        }
     }
 
-    void TakeDamage(int damage)
+    public void TakeDamage(int damage)
     {
-        currentHealth -= damage;
-        healthBar.SetHealth(currentHealth);
+        currHealth -= damage;
+        healthBar.SetHealth(currHealth);
+    }
+
+    public void AddExp(int exp)
+    {
+        currExp += exp;
+        expBar.SetExp(currExp);
+
+        if(currExp >= maxExp)
+        {
+            LevelUp();
+        }
+    }
+
+    public void LevelUp()
+    {
+        currExp = 0;
+        expBar.SetExp(currExp);
+        currLevel += 1;
+        expBar.SetCurrLevel(currLevel);
+        AddMaxExp();
+
+        currHealth = maxHealth;
+        healthBar.SetHealth(currHealth);
+
+    }
+
+    public void AddMaxExp()
+    {
+        maxExp += 100 * currLevel;
+    }
+
+    public void ShowAddSkillPoints()
+    {
+        addSkillPoints.Show();
+    }
+
+    public void HideAddSkillPoints()
+    {
+        addSkillPoints.Hide();
     }
 
 }
